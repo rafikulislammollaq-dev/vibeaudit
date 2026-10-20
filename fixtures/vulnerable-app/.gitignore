@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.next/
+
+# Logs
+*.log
+npm-debug.log*
+
+# NOTE: there is no ".env" entry here. That is the bug this demo reproduces:
+# 18.5% of public repos built with Lovable / Bolt / v0 commit their .env file.

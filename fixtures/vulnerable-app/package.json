@@ -1,0 +1,23 @@
+{
+  "name": "vibe-coded-crm",
+  "version": "0.4.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "4.17.1",
+    "cors": "2.8.5",
+    "jsonwebtoken": "8.5.1",
+    "jwt-decode": "3.1.2",
+    "lodash": "4.17.15",
+    "axios": "1.2.0",
+    "@supabase/supabase-js": "2.39.7"
+  },
+  "devDependencies": {
+    "vite": "5.0.12"
+  }
+}

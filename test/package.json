@@ -1,0 +1,19 @@
+{
+  "name": "vibeaudit-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "suite.js",
+  "comment": [
+    "This file exists so that `node --test test/` works on every supported Node version.",
+    "Node >= 22.6 resolves a positional test-runner argument as a glob and then loads",
+    "the matched path as a module. A bare directory cannot be executed, but a directory",
+    "with a package.json `main` entry can - Node resolves it to test/suite.js, which",
+    "imports every test file.",
+    "On Node 20 the same command searches the directory recursively and runs the test",
+    "files directly, so the same tests run (once more than once, because suite.js also",
+    "imports them - the tests are written to be independent, so that is harmless).",
+    "Only .sql / .ts / .env files live in test/fixtures, so the Node 20 recursive search",
+    "never tries to execute a fixture as a test."
+  ]
+}

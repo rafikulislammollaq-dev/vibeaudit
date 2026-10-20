@@ -1,0 +1,32 @@
+{
+  "name": "vibeaudit",
+  "version": "1.0.0",
+  "description": "Security audit CLI for AI-generated (vibe-coded) apps - finds leaked keys, missing Row Level Security, auth mistakes and unsafe CORS, and explains them in plain English.",
+  "type": "module",
+  "main": "cli.js",
+  "bin": {
+    "vibeaudit": "./cli.js"
+  },
+  "scripts": {
+    "audit": "node cli.js",
+    "demo": "node cli.js --demo",
+    "test": "node --test test/"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "security",
+    "audit",
+    "vibe-coding",
+    "lovable",
+    "bolt",
+    "cursor",
+    "supabase",
+    "rls"
+  ],
+  "license": "MIT",
+  "private": true,
+  "dependencies": {},
+  "devDependencies": {}
+}

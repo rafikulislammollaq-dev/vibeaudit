@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ShipSafe — Security review for AI-built apps</title>
+<meta name="description" content="You built it with Lovable, Bolt or Cursor in a weekend. A study of 400 AI-built apps found 59% had a critical security issue. Get a plain-English security review with fixes you can paste straight in. $199, 48 hours." />
+<meta property="og:title" content="ShipSafe — Security review for AI-built apps" />
+<meta property="og:description" content="A founder-to-founder security review for apps built with AI. $199, 48 hours, plain English, fixes included." />
+<meta property="og:type" content="website" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top" aria-label="ShipSafe home">
+      <svg viewBox="0 0 32 32" aria-hidden="true" class="logo"><path d="M16 2 4 6v9c0 7.2 5 13.4 12 15 7-1.6 12-7.8 12-15V6L16 2Zm0 3.3 8.5 2.8V15c0 5.4-3.4 10.3-8.5 11.9C10.9 25.3 7.5 20.4 7.5 15V8.1L16 5.3Z"/><path d="m14.2 18.4-3.6-3.6-1.6 1.6 5.2 5.2 8.6-8.6-1.6-1.6-7 7Z"/></svg>
+      <span>ShipSafe</span>
+    </a>
+    <nav class="links" aria-label="Primary">
+      <a href="#why">Why it matters</a>
+      <a href="#checks">What I check</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#process">How it works</a>
+    </nav>
+    <a class="btn btn-primary btn-sm" href="#order">Order a review</a>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow"><span class="dot"></span> Fixed price · 48-hour turnaround</p>
+      <h1>You shipped it in a weekend. Has anyone actually looked at it?</h1>
+      <p class="lede">
+        AI tooling made building fast. It did not make building safe.
+        I review AI-generated apps — Lovable, Bolt, Cursor, Replit, Supabase — and hand you a
+        <strong>plain-English list of what is actually wrong</strong>, with fixes you can paste
+        straight into your editor.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#order">Order a review — $199</a>
+        <a class="btn btn-ghost" href="#checks">See the 10 checks</a>
+      </div>
+      <ul class="proof">
+        <li><strong>400</strong> apps studied: 59% had a critical issue</li>
+        <li><strong>48h</strong> turnaround, fixed price</li>
+        <li><strong>Plain</strong> English, no jargon dump</li>
+      </ul>
+    </div>
+
+    <div class="hero-demo" aria-label="Example findings">
+      <div class="report-card">
+        <div class="rc-head">
+          <span class="rc-score">32</span>
+          <div>
+            <div class="rc-verdict">Do not ship yet</div>
+            <div class="rc-sub">Ship readiness score</div>
+          </div>
+        </div>
+        <div class="rc-list">
+          <div class="rc-item crit"><b>CRITICAL</b><span>Your Supabase service_role key is in the client bundle</span></div>
+          <div class="rc-item crit"><b>CRITICAL</b><span>7 tables have no row-level rules — anyone can read every customer row</span></div>
+          <div class="rc-item high"><b>HIGH</b><span>Edge function reads the customer table without checking who is signed in</span></div>
+          <div class="rc-item high"><b>HIGH</b><span>/api/debug returns other people's data</span></div>
+          <div class="rc-item med"><b>MEDIUM</b><span>No rate limit on the login route</span></div>
+        </div>
+        <div class="rc-foot">+ paste-ready fix for each finding</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="why">
+  <div class="wrap">
+    <h2 class="center">This is a known problem, not a hypothetical</h2>
+    <p class="center sub">The pattern is consistent across independent studies of AI-built apps.</p>
+    <div class="cards">
+      <article class="card">
+        <div class="ico">📊</div>
+        <h3>63% had critical or high flaws</h3>
+        <p>A scan of 62 Lovable apps found 63% carried critical or high severity vulnerabilities — an average of 10 findings each.</p>
+      </article>
+      <article class="card">
+        <div class="ico">🔓</div>
+        <h3>59% had at least one critical issue</h3>
+        <p>Across 400 public repos built with Lovable, Bolt and v0, 18.5% had a committed <code>.env</code> file and 59% had a critical problem.</p>
+      </article>
+      <article class="card">
+        <div class="ico">👥</div>
+        <h3>Real customer data exposed</h3>
+        <p>10.3% of sampled apps exposed live user data through missing row-level security. 98% of apps behind a public database URL had an exploitable flaw.</p>
+      </article>
+    </div>
+    <p class="fine center">These are apps that got real users. The tooling's own scanner does not catch most of them — the platform's own team has said so publicly.</p>
+  </div>
+</section>
+
+<section class="band alt" id="checks">
+  <div class="wrap">
+    <h2 class="center">Ten checks. Every one of them has broken a real app.</h2>
+    <p class="center sub">Run automatically, judged by a human, explained without jargon.</p>
+    <div class="checks">
+      <div class="check"><span class="cn">01</span><div><h3>Committed secrets</h3><p>Is your <code>.env</code> in git? Has the database admin key ever been shipped to a browser?</p></div></div>
+      <div class="check"><span class="cn">02</span><div><h3>Public database access</h3><p>Your database URL and "public" key are meant to be public. I test whether strangers can actually read your tables with them.</p></div></div>
+      <div class="check"><span class="cn">03</span><div><h3>Row-level security</h3><p>Does every table actually restrict each customer to their own rows — or did the rule never get written?</p></div></div>
+      <div class="check"><span class="cn">04</span><div><h3>Elevated database functions</h3><p>Functions that run with database-admin rights are the classic way one customer reads another customer's data.</p></div></div>
+      <div class="check"><span class="cn">05</span><div><h3>Who is actually signed in</h3><p>Are admin pages and edge functions checking the person making the request, or trusting what the browser tells them?</p></div></div>
+      <div class="check"><span class="cn">06</span><div><h3>Debug leftovers</h3><p>Test routes, verbose errors and source maps that should never have shipped.</p></div></div>
+      <div class="check"><span class="cn">07</span><div><h3>Token handling</h3><p>Tokens that are decoded instead of verified, or accepted with a "none" algorithm.</p></div></div>
+      <div class="check"><span class="cn">08</span><div><h3>Cross-origin access</h3><p>Can any website in the world call your API and read the response?</p></div></div>
+      <div class="check"><span class="cn">09</span><div><h3>Missing browser protections</h3><p>The headers that stop the simplest attacks, and whether your site can be framed by another site.</p></div></div>
+      <div class="check"><span class="cn">10</span><div><h3>Known-risky dependencies</h3><p>Anything in your package list with a published advisory — and whether it is actually used.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="pricing">
+  <div class="wrap">
+    <h2 class="center">Pricing</h2>
+    <p class="center sub">Fixed price, agreed before I start. No hourly meter running in the background.</p>
+    <div class="plans">
+      <div class="plan featured">
+        <div class="badge">Start here</div>
+        <h3>Security Sweep</h3>
+        <div class="price"><span class="cur">$</span>199<span class="per">fixed</span></div>
+        <ul>
+          <li>All 10 checks</li>
+          <li>Prioritized findings report</li>
+          <li>Paste-ready fixes for every finding</li>
+          <li>20-minute walkthrough video</li>
+          <li>Delivered in 48 hours</li>
+        </ul>
+        <a class="btn btn-primary btn-block" href="#order">Order the Sweep</a>
+      </div>
+      <div class="plan">
+        <h3>Rescue</h3>
+        <div class="price"><span class="cur">$</span>599<span class="per">fixed</span></div>
+        <ul>
+          <li>Everything in the Sweep</li>
+          <li>I implement the fixes</li>
+          <li>Re-scan to confirm clean</li>
+          <li>5-day turnaround</li>
+        </ul>
+        <a class="btn btn-ghost btn-block" href="#order">Order the Rescue</a>
+      </div>
+      <div class="plan">
+        <h3>Ship Check</h3>
+        <div class="price"><span class="cur">$</span>899<span class="per">fixed</span></div>
+        <ul>
+          <li>Everything in the Rescue</li>
+          <li>Deployment hardening</li>
+          <li>Written pre-launch checklist</li>
+          <li>60-min advisory, 8 weeks</li>
+        </ul>
+        <a class="btn btn-ghost btn-block" href="#order">Order the Ship Check</a>
+      </div>
+    </div>
+    <p class="fine center">What this is not: this is not a penetration test, not a compliance audit, and not a guarantee. It is a focused code and configuration review before you have to worry about a breach.</p>
+  </div>
+</section>
+
+<section class="band alt" id="process">
+  <div class="wrap">
+    <h2 class="center">How it works</h2>
+    <p class="center sub">No sales calls. No 30-minute discovery. Four steps, 48 hours.</p>
+    <ol class="steps steps-wide">
+      <li><b>You send access.</b> A repo link, a zip, or your live URL. No credentials needed for most checks — and I never keep a copy of your code.</li>
+      <li><b>I run the scan.</b> Ten checks against your actual stack, not a generic checklist.</li>
+      <li><b>I read the results.</b> A scanner finds things. A person decides which ones matter and whether the fix will break your app.</li>
+      <li><b>You get the report.</b> Plain-English findings, ranked by what would hurt you most, each with a fix you can paste in. Plus a short walkthrough video.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="band" id="order">
+  <div class="wrap demo-grid">
+    <div>
+      <h2>Order a review</h2>
+      <p class="sub">
+        Tell me what you built and where it lives. You'll get a confirmation and a delivery
+        date — and if I find nothing serious, I'll say so rather than invent work.
+      </p>
+      <ul class="checklist">
+        <li>Full scan of all 10 checks</li>
+        <li>Findings ranked by real-world impact</li>
+        <li>Paste-ready fixes, not vague advice</li>
+        <li>Walkthrough video explaining each finding</li>
+        <li>You own the report and every fix</li>
+      </ul>
+      <p class="fine">Confidentiality: your code is never shared, never sold, never used as training data, and deleted on request after delivery.</p>
+    </div>
+    <form class="form" id="demoForm" novalidate>
+      <div class="field">
+        <label for="biz">App name</label>
+        <input id="biz" name="biz" type="text" required placeholder="Travel advisor app" autocomplete="organization" />
+      </div>
+      <div class="field">
+        <label for="stack">Built with</label>
+        <select id="stack" name="stack">
+          <option>Lovable</option>
+          <option>Bolt</option>
+          <option>Cursor</option>
+          <option>Replit</option>
+          <option>v0</option>
+          <option>Next.js + Supabase (hand-built)</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="url">Repo link or live URL</label>
+        <input id="url" name="url" type="text" required placeholder="https://github.com/you/app" autocomplete="url" />
+      </div>
+      <div class="field">
+        <label for="tier">Which review</label>
+        <select id="tier" name="tier">
+          <option>Security Sweep — $199</option>
+          <option>Rescue (audit + fixes) — $599</option>
+          <option>Ship Check — $899</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="note">Anything specific you're worried about? (optional)</label>
+        <textarea id="note" name="note" rows="3" placeholder="A user reported they could see someone else's booking."></textarea>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit" id="demoBtn">Order the review</button>
+      <p class="form-msg" id="formMsg" role="status" aria-live="polite"></p>
+      <p class="fine">Your details are used to deliver the review only. No newsletter, no list.</p>
+    </form>
+  </div>
+</section>
+
+<section class="band alt" id="faq">
+  <div class="wrap narrow">
+    <h2 class="center">Questions</h2>
+    <div class="faq">
+      <details><summary>Will you tell me to rewrite everything?</summary>
+        <p>No. Most findings are one or two lines. The report tells you what to change and what to leave alone, ranked by what actually matters for your app.</p></details>
+      <details><summary>What do you need from me?</summary>
+        <p>A repo link with read access, a zip, or the live URL plus your explicit permission to test it. For database checks I may ask you to run one read-only query yourself — I never ask for production credentials.</p></details>
+      <summary></summary>
+      <details><summary>Is this legal to do to my own app?</summary>
+        <p>Yes — it is your app and you authorise every check. I never test a system without written authorisation, and the live checks send a single harmless read-only request.</p></details>
+      <details><summary>Will you find something embarrassing?</summary>
+        <p>Probably. That is the point, and nobody else sees it. The report is written to be handed straight to whoever needs to act on it.</p></details>
+      <details><summary>What if there is a real, exploitable vulnerability?</summary>
+        <p>I will tell you immediately and separately, ahead of the report, with the fix first. If it is being exploited right now, drop everything and rotate your keys first.</p></details>
+      <details><summary>Do I need to fix everything before launch?</summary>
+        <p>No. You get a ranked list so you can decide. Most teams fix the critical and high items and launch.</p></details>
+      <details><summary>Can you help after the review?</summary>
+        <p>Yes — that is the Rescue tier. I implement the fixes and re-scan to confirm, and you can go from Sweep to Rescue at any point.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="cta-band">
+  <div class="wrap center">
+    <h2>Your first paying user is not the risk.</h2>
+    <p class="sub">A breach is.</p>
+    <a class="btn btn-primary btn-lg" href="#order">Order a review — $199</a>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <div class="brand small">
+      <svg viewBox="0 0 32 32" aria-hidden="true" class="logo"><path d="M16 2 4 6v9c0 7.2 5 13.4 12 15 7-1.6 12-7.8 12-15V6L16 2Zm0 3.3 8.5 2.8V15c0 5.4-3.4 10.3-8.5 11.9C10.9 25.3 7.5 20.4 7.5 15V8.1L16 5.3Z"/><path d="m14.2 18.4-3.6-3.6-1.6 1.6 5.2 5.2 8.6-8.6-1.6-1.6-7 7Z"/></svg>
+      <span>ShipSafe</span>
+    </div>
+    <p class="fine">© <span id="year"></span> ShipSafe. Reviews are performed only on systems you own or are explicitly authorised to test.</p>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="#order">Order</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#checks">Checks</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

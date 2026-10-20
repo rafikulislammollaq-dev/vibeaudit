@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Runtime state
+data/
+out/
+*.report.md
+*.log
+
+# The demo fixture's vulnerable files are GENERATED at runtime by
+# fixtures/build-fixture.mjs, not committed. Two reasons:
+#   1. GitHub push protection refuses a push containing credential-shaped
+#      strings, even fabricated ones - and it scans history too. The tool's
+#      own repository must stay publishable.
+#   2. The values are assembled at runtime rather than stored, so the
+#      published tree contains no secret-shaped literal at all.
+# fixtures/build-fixture.mjs writes these into the fixture directory and
+# commits them to the fixture's OWN git repository, which is what makes the
+# demo report "committed to git" rather than "present on disk".
+fixtures/vulnerable-app/.env
+fixtures/vulnerable-app/.env.local
+fixtures/vulnerable-app/dist/
+fixtures/vulnerable-app/.git/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+test/fixtures/.env
