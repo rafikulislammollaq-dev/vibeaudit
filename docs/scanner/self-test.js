@@ -15,6 +15,9 @@ import './lib/files.core.js';
 import './lib/findings.core.js';
 import './lib/evidence.core.js';
 import './lib/report.core.js';
-import './checks/index.core.js';
+// The ES-module facade, not the raw classic script: the facade loads every
+// individual check before the registry runs. Without them the registry is
+// full of undefined and every detection test fails.
+import './checks/index.js';
 import './scan.core.js';
 import './self-test.core.js';
