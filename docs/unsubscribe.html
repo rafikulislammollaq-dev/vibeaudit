@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Unsubscribe — ShipSafe</title>
+<meta name="robots" content="noindex" />
+<style>
+  :root { --bg:#0d1117; --card:#161b22; --line:#30363d; --txt:#e6edf3; --muted:#8b949e; --accent:#58a6ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  .wrap { max-width:34rem; margin:0 auto; padding:3rem 1.25rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:2rem; }
+  h1 { font-size:1.5rem; margin:0 0 .75rem; }
+  p { color:var(--muted); margin:0 0 1rem; }
+  label { display:block; font-size:.9rem; margin-bottom:.4rem; color:var(--txt); }
+  input { width:100%; padding:.7rem .8rem; border-radius:8px; border:1px solid var(--line); background:#0d1117; color:var(--txt); font-size:1rem; }
+  button { margin-top:1rem; width:100%; padding:.8rem; border:0; border-radius:8px; background:var(--accent); color:#06121f; font-weight:700; font-size:1rem; cursor:pointer; }
+  .ok { margin-top:1rem; padding:.8rem; border-radius:8px; border:1px solid #2ea04326; background:#2ea0431a; color:#7ee787; font-size:.95rem; }
+  .note { margin-top:1.5rem; font-size:.85rem; color:var(--muted); }
+  a { color:var(--accent); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Unsubscribe</h1>
+      <p>
+        Enter the email address you were sent to and you will not hear from me again.
+        There is no list to leave, no confirmation to click, and nothing changes about
+        anything else.
+      </p>
+      <form id="f">
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" required placeholder="you@yourapp.com" />
+        <button type="submit">Unsubscribe</button>
+        <div id="msg"></div>
+      </form>
+      <p class="note">
+        If it is easier, just reply to any email from me with the word
+        <b>unsubscribe</b> and I will do it by hand. You can also reach me at
+        <a href="mailto:rajibulislam584452@gmail.com">rajibulislam584452@gmail.com</a>.
+      </p>
+    </div>
+  </div>
+<script>
+  // The address arrives base64url encoded in ?e=, so the visitor does not
+  // have to retype it and the link in the email works on its own.
+  (function prefill() {
+    var m = /[?&]e=([^&]+)/.exec(location.search);
+    if (!m) return;
+    try {
+      var email = atob(m[1].replace(/-/g, "+").replace(/_/g, "/"));
+      document.getElementById("email").value = email;
+    } catch (e) { /* an unreadable token just means the field stays empty */ }
+  })();
+
+  // Posts the address to the same FormSubmit endpoint the order form uses, so
+  // an unsubscribe lands in the same inbox as everything else and can be
+  // added to the suppression list by hand.
+  var ENDPOINT = "https://formsubmit.co/ajax/rajibulislam584452@gmail.com";
+  var form = document.getElementById("f");
+  var msg = document.getElementById("msg");
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var email = document.getElementById("email").value.trim();
+    if (!email) return;
+    fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ email: email, action: "unsubscribe", source: "shipsafe-unsubscribe-page" })
+    }).then(function (r) { return r.ok; }).then(function (ok) {
+      msg.innerHTML = '<div class="ok">' + (ok
+        ? "Done. " + email + " is unsubscribed."
+        : "That did not go through. Reply to any email from me with the word unsubscribe and I will remove you by hand.") + "</div>";
+      if (ok) { form.reset(); }
+    }).catch(function () {
+      msg.innerHTML = '<div class="ok">That did not go through. Reply to any email from me with the word unsubscribe and I will remove you by hand.</div>';
+    });
+  });
+</script>
+</body>
+</html>
