@@ -186,7 +186,11 @@
   }
 
   // ---------------------------------------------------------------- nav active state
-  const navLinks = $$(".links a");
+  //
+  // Only in-page anchors belong here. A nav link to a real page (for example
+  // the free scanner at "scanner/") must not be handed to querySelector,
+  // which would throw on anything that is not a valid CSS selector.
+  const navLinks = $$(".links a").filter((a) => (a.getAttribute("href") || "").startsWith("#"));
   const sections = navLinks
     .map((a) => document.querySelector(a.getAttribute("href")))
     .filter(Boolean);

@@ -296,17 +296,108 @@ line('  (dev/ is excluded: those are the node verification scripts, not shipped 
 line();
 
 /* ------------------------------------------------------------------ */
+/* 6. entry point import graph                                         */
+/* ------------------------------------------------------------------ */
+
+/*
+ * WHY THIS EXISTS
+ *
+ * The browser loads the scanner through an ES-module entry point
+ * (app.js / scan.js / self-test.js), while this harness imports every
+ * .core.js file it finds in the folder. That difference let a real bug
+ * through: the entry points imported only checks/index.core.js, never the
+ * six individual check modules, so the registry it builds was six
+ * undefined entries and every scan reported zero findings. This harness
+ * passed, because it never went through the entry point. The browser
+ * self-test failed 18 of 25 checks.
+ *
+ * So: walk the import graph of each entry point exactly as the browser
+ * would, and require that every check module is reachable.
+ */
+
+rule();
+line('6. ENTRY POINT IMPORT GRAPH (the browser loads the scanner this way)');
+line('-'.repeat(78));
+
+const CHECK_MODULES = [
+  'checks/env-committed.core.js',
+  'checks/secrets.core.js',
+  'checks/rls.core.js',
+  'checks/jwt.core.js',
+  'checks/cors.core.js',
+  'checks/debug-routes.core.js',
+];
+
+const ENTRY_POINTS = ['app.js', 'scan.js', 'self-test.js'];
+
+/** Resolve a relative import specifier against the importing file. */
+function resolveImport(fromFile, specifier) {
+  if (!specifier.startsWith('.')) return null;
+  const resolved = path.resolve(path.dirname(fromFile), specifier);
+  return resolved.split(path.sep).join('/');
+}
+
+/** Every file reachable from an entry point by following its imports. */
+async function importClosure(entryFile) {
+  const seen = new Set();
+  const queue = [entryFile];
+  while (queue.length) {
+    const current = queue.pop();
+    if (!current || seen.has(current)) continue;
+    seen.add(current);
+    let source;
+    try {
+      source = await readFile(current, 'utf8');
+    } catch {
+      continue;
+    }
+    const re = /(?:^|\n)\s*(?:import|export)[^'"\n]*from\s*['"]([^'"]+)['"]/g;
+    const re2 = /(?:^|\n)\s*import\s*['"]([^'"]+)['"]/g;
+    for (const r of [re, re2]) {
+      let m;
+      while ((m = r.exec(source)) !== null) {
+        const resolved = resolveImport(current, m[1]);
+        if (resolved) queue.push(resolved);
+      }
+    }
+  }
+  return seen;
+}
+
+let importGraphFailures = 0;
+for (const entry of ENTRY_POINTS) {
+  const entryPath = path.join(root, entry);
+  const closure = await importClosure(entryPath);
+  const rel = new Set([...closure].map((f) => path.relative(root, f).split(path.sep).join('/')));
+  const missing = CHECK_MODULES.filter((m) => !rel.has(m));
+  if (missing.length) {
+    importGraphFailures += 1;
+    line(`  FAIL  ${entry} does not reach ${missing.length} check module(s):`);
+    for (const m of missing) line(`          ${m}`);
+  } else {
+    line(`  PASS  ${entry} reaches all ${CHECK_MODULES.length} check modules`);
+  }
+}
+line();
+
+/* ------------------------------------------------------------------ */
 /* summary                                                              */
 /* ------------------------------------------------------------------ */
 
 rule();
-const ok = importFailures === 0 && outcome.failed === 0 && networkHits === 0 && remoteLinkHits === 0;
+const ok =
+  importFailures === 0 &&
+  outcome.failed === 0 &&
+  networkHits === 0 &&
+  remoteLinkHits === 0 &&
+  importGraphFailures === 0;
 if (ok) {
   line('ALL CHECKS PASSED');
 } else {
   line(
     `FAILED: ${importFailures} import error(s), ${outcome.failed} self-test failure(s), ` +
-      `${networkHits} network call(s), ${remoteLinkHits} remote asset(s)`,
+      `${networkHits} network call(s), ${remoteLinkHits} remote asset(s), ` +
+      `${importGraphFailures} entry point import graph failure(s)`,
   );
 }
 rule();
