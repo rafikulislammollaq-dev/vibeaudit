@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Ship Check - self-test</title>
+    <meta name="description" content="Verifies the browser security scanner against small inline fixtures. No server needed." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%E2%9C%93%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="scanner.css" />
+    <style>
+      .verdict-pass {
+        color: var(--accent);
+        font-weight: 800;
+        font-size: 1.2rem;
+      }
+      .verdict-fail {
+        color: var(--danger);
+        font-weight: 800;
+        font-size: 1.2rem;
+      }
+      .test-list {
+        list-style: none;
+        padding: 0;
+        margin: 18px 0 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.88rem;
+      }
+      .test-list li {
+        padding: 7px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .test-list li b {
+        display: inline-block;
+        min-width: 52px;
+      }
+      .test-list li.pass b {
+        color: var(--accent);
+      }
+      .test-list li.fail b {
+        color: var(--danger);
+      }
+      .test-list li em {
+        color: var(--muted);
+        font-style: normal;
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to the results</a>
+
+    <header class="top">
+      <div class="wrap top-inner">
+        <a class="brand" href="index.html">
+          <span class="brand-mark" aria-hidden="true">&#9679;</span>
+          <span>AI Ship Check</span>
+        </a>
+        <p class="privacy-pill" role="note">
+          <span aria-hidden="true">&#128274;</span> Self-test - nothing leaves this browser
+        </p>
+      </div>
+    </header>
+
+    <main id="main" class="wrap">
+      <section class="hero">
+        <p class="eyebrow">Verification</p>
+        <h1>Self-test</h1>
+        <p class="lede">
+          These checks run the real detection logic against small fixtures written into this page: a bad
+          <code>.env</code>, a bad <code>.sql</code> migration, a CORS snippet, a JWT snippet and a debug route. If the
+          scanner is behaving as documented, this page prints <strong>ALL CHECKS PASSED</strong>.
+        </p>
+        <p class="muted">
+          Open this file directly from the filesystem (double-click it) - no server, no build step, no network.
+        </p>
+      </section>
+
+      <section id="results" class="panel" aria-live="polite">
+        <p class="muted">Running…</p>
+      </section>
+
+      <section class="band">
+        <p class="fine">
+          <a href="index.html">Back to the scanner</a>
+        </p>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        var CORE = [
+          'lib/util.core.js',
+          'lib/severity.core.js',
+          'lib/secrets.core.js',
+          'lib/sql.core.js',
+          'lib/files.core.js',
+          'lib/findings.core.js',
+          'lib/evidence.core.js',
+          'lib/report.core.js',
+          'checks/env-committed.core.js',
+          'checks/secrets.core.js',
+          'checks/rls.core.js',
+          'checks/jwt.core.js',
+          'checks/cors.core.js',
+          'checks/debug-routes.core.js',
+          'checks/index.core.js',
+          'scan.core.js',
+          'self-test.core.js',
+        ];
+
+        if (location.protocol === 'file:') {
+          for (var i = 0; i < CORE.length; i += 1) {
+            (function (src) {
+              var script = document.createElement('script');
+              script.src = src;
+              script.async = false;
+              script.onerror = function () {
+                var host = document.getElementById('results');
+                if (host) host.textContent = 'Could not load ' + src + ' from the filesystem.';
+              };
+              document.head.appendChild(script);
+            })(CORE[i]);
+          }
+        } else {
+          var module = document.createElement('script');
+          module.type = 'module';
+          module.src = 'self-test.js';
+          document.head.appendChild(module);
+        }
+      })();
+    </script>
+  </body>
+</html>

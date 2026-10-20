@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Ship Check - free security scan for AI-built apps (runs in your browser)</title>
+    <meta
+      name="description"
+      content="Drop your project folder and get a ship-readiness security score in seconds. Everything runs in your browser: no upload, no server, no signup."
+    />
+    <meta name="robots" content="index,follow" />
+    <!-- Inline SVG data URI: no network request, no favicon 404. -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%94%90%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="scanner.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to the scanner</a>
+
+    <header class="top">
+      <div class="wrap top-inner">
+        <a class="brand" href="../index.html">
+          <span class="brand-mark" aria-hidden="true">&#9679;</span>
+          <span>AI Ship Check</span>
+        </a>
+        <p class="privacy-pill" role="note">
+          <span aria-hidden="true">&#128274;</span> Your code never leaves this browser
+        </p>
+      </div>
+    </header>
+
+    <main id="main" class="wrap">
+      <section class="hero">
+        <p class="eyebrow">Free &middot; No signup &middot; No upload &middot; No server</p>
+        <h1>Drop your project folder. Get a security score in seconds.</h1>
+        <p class="lede">
+          AI-built apps have a small set of predictable security mistakes: keys left in the code, database tables
+          nobody protected, leftover debug endpoints. Point this scanner at your project and it will tell you which
+          ones you have, in plain English, with the exact prompt to paste into Cursor, Lovable or Bolt.
+        </p>
+
+        <div
+          id="dropzone"
+          class="dropzone"
+          role="button"
+          tabindex="0"
+          aria-label="Drop your project folder here, or press Enter to choose a folder"
+          aria-describedby="dropzone-hint"
+        >
+          <div class="dropzone-icon" aria-hidden="true">&#11015;</div>
+          <p class="dropzone-title">Drop your project folder here</p>
+          <p id="dropzone-hint" class="muted">
+            Or use the buttons below. The files are read with the browser's own file API and analysed on this
+            machine - nothing is uploaded, and the page never talks to any server.
+          </p>
+          <div class="dropzone-actions">
+            <button id="pick-folder" class="btn btn-primary" type="button">Choose a folder</button>
+            <button id="pick-files" class="btn btn-ghost" type="button">Choose files instead</button>
+          </div>
+          <input
+            id="folder-input"
+            class="visually-hidden"
+            type="file"
+            webkitdirectory
+            directory
+            multiple
+            aria-label="Choose a project folder"
+          />
+          <input
+            id="files-input"
+            class="visually-hidden"
+            type="file"
+            multiple
+            aria-label="Choose individual project files"
+          />
+        </div>
+
+        <div id="progress" class="progress" hidden>
+          <div
+            class="progress-track"
+            role="progressbar"
+            aria-label="Scan progress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <div id="progress-bar" class="progress-bar"></div>
+          </div>
+          <p id="progress-text" class="muted small"></p>
+        </div>
+
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <section id="results" class="results" aria-live="polite" hidden></section>
+
+      <section class="band">
+        <h2>What this checks</h2>
+        <div class="cards">
+          <article class="card">
+            <p class="ico" aria-hidden="true">&#128273;</p>
+            <h3>Leaked secrets</h3>
+            <p>
+              Live Stripe keys, Supabase service-role tokens, AWS keys, Slack and Discord webhooks, private keys and
+              hard-coded assignments to anything named SECRET, TOKEN, PASSWORD or API_KEY. Values are redacted - the
+              report never shows a working key.
+            </p>
+          </article>
+          <article class="card">
+            <p class="ico" aria-hidden="true">&#128274;</p>
+            <h3>Unprotected database tables</h3>
+            <p>
+              Postgres tables created without Row Level Security, permissive <code>USING (true)</code> policies, and
+              <code>SECURITY DEFINER</code> functions with no pinned <code>search_path</code>.
+            </p>
+          </article>
+          <article class="card">
+            <p class="ico" aria-hidden="true">&#128454;</p>
+            <h3>Weak token handling</h3>
+            <p>
+              JWT verification that accepts <code>alg: "none"</code>, tokens that are decoded instead of verified, and
+              signing secrets that fall back to a hard-coded default.
+            </p>
+          </article>
+          <article class="card">
+            <p class="ico" aria-hidden="true">&#127760;</p>
+            <h3>CORS and debug routes</h3>
+            <p>
+              Wildcard CORS combined with credentials, reflected origins, leftover <code>/api/debug</code> style routes
+              and source maps published with the build.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="band">
+        <h2>What it cannot do</h2>
+        <p class="sub">
+          A tool that runs in your browser stops where your folder stops. The report is explicit about the gaps:
+          it never tests your live site, never runs a dependency audit, and cannot read your git history. The full
+          paid review covers all of those.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="../index.html">See the full security review</a>
+          <a class="btn btn-ghost" id="self-test-link" href="self-test.html">Verify the scanner yourself</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <p class="fine">
+          100% client-side. No <code>fetch</code>, no analytics, no CDN, no cookies. Open the page source and check.
+        </p>
+      </div>
+    </footer>
+
+    <!--
+      Dual-mode loader.
+
+      Browsers refuse to load ES modules over file:// (the scheme reports a
+      null origin, and module fetches are subject to CORS). So when the page
+      is opened straight from the filesystem we load the very same code as
+      classic scripts, in order. When it is served over http(s) we load the
+      ES-module build. One implementation, two loaders, no build step.
+    -->
+    <script>
+      (function () {
+        var CORE = [
+          'lib/util.core.js',
+          'lib/severity.core.js',
+          'lib/secrets.core.js',
+          'lib/sql.core.js',
+          'lib/files.core.js',
+          'lib/findings.core.js',
+          'lib/evidence.core.js',
+          'lib/report.core.js',
+          'checks/env-committed.core.js',
+          'checks/secrets.core.js',
+          'checks/rls.core.js',
+          'checks/jwt.core.js',
+          'checks/cors.core.js',
+          'checks/debug-routes.core.js',
+          'checks/index.core.js',
+          'scan.core.js',
+          'app.core.js',
+        ];
+
+        function fail(message) {
+          var status = document.getElementById('status');
+          if (status) {
+            status.textContent = message;
+            status.className = 'status status-error';
+          }
+        }
+
+        if (location.protocol === 'file:') {
+          for (var i = 0; i < CORE.length; i += 1) {
+            (function (src) {
+              var script = document.createElement('script');
+              script.src = src;
+              script.async = false; // keep the load order
+              script.onerror = function () {
+                fail('Could not load ' + src + ' from the filesystem. Try serving the folder over http instead.');
+              };
+              document.head.appendChild(script);
+            })(CORE[i]);
+          }
+        } else {
+          var module = document.createElement('script');
+          module.type = 'module';
+          module.src = 'app.js';
+          module.onerror = function () {
+            fail('Could not load the scanner modules (app.js).');
+          };
+          document.head.appendChild(module);
+        }
+      })();
+    </script>
+  </body>
+</html>

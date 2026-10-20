@@ -1,0 +1,10 @@
+{
+  "name": "ai-ship-check-scanner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Client-side security scanner for AI-built apps. Zero dependencies, zero build step, zero network calls.",
+  "scripts": {
+    "verify": "node dev/verify.js"
+  }
+}

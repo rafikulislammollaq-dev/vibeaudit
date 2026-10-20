@@ -11,7 +11,7 @@ problems that AI-built apps have, and explains them in plain English with a
 fix you can paste straight back into your AI assistant.
 
 ```
-🚨 Unsafe to ship - 0/100  (11 critical, 20 high, 7 medium, 2 low)
+🚨 Unsafe to ship - 0/100  (12 critical, 20 high, 7 medium, 2 low)
 ```
 
 ---
@@ -148,7 +148,7 @@ a score must never be able to hide a problem that puts customer data at risk.
 
 | Critical | High | Medium | Low |
 |---|---|---|---|
-| 11 | 20 | 7 | 2 |
+| 12 | 20 | 7 | 2 |
 
 > **At least one CRITICAL issue was found, so this project cannot be called
 > ready to ship no matter how high the score is.**
@@ -158,7 +158,7 @@ a score must never be able to hide a problem that puts customer data at risk.
 We checked 16 files in your project for the security mistakes that AI-built
 apps make most often - leaked passwords and keys, database tables that anyone
 on the internet can read, and admin pages that are not protected. We found 40
-issues - 11 serious problems, 20 important problems, 7 medium problems and 2
+issues - 12 serious problems, 20 important problems, 7 medium problems and 2
 small problems. That gives a readiness score of 0 out of 100, which means the
 app currently has serious security holes and should not be exposed to users or
 real data until they are fixed. The most urgent one is: A powerful secret key

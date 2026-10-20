@@ -1,12 +1,28 @@
-/* CallLoop landing page — no dependencies, no CDN, works fully offline. */
+/* ShipSafe landing page — no dependencies, no CDN, works fully offline. */
 (() => {
   "use strict";
 
   // ---------------------------------------------------------------- config
-  // Where demo requests are POSTed. Point this at the CallLoop API once deployed.
+  //
+  // The order form has to survive being hosted in three different places:
+  // a Netlify site, a GitHub Pages site, and a plain file:// preview. Each
+  // one can capture a lead in a different way, so the form tries them in
+  // order and falls back to a prefilled email if none of them work. A lead
+  // must never be lost because the form host is having a bad day.
+  //
+  // The Netlify path is the primary one: a form with a `name` and the
+  // `netlify` attribute is captured by Netlify's build bot automatically and
+  // the submission shows up in the Netlify dashboard for this site. No
+  // third-party service, no API key, no credit card.
   const CONFIG = {
-    demoEndpoint: window.CALLLOOP_DEMO_ENDPOINT || "/api/public/demo-lead",
-    mailFallback: "mailto:hello@callloop.app",
+    // Where a lead is delivered if every programmatic route fails.
+    mailFallback: "mailto:rajibulislam584452@gmail.com",
+    // Netlify's own form handling, used when this page is served by Netlify.
+    netlifyPath: "/",
+    // FormSubmit mirrors the form to the given address and needs no
+    // account. It is the route that works on GitHub Pages. It answers the
+    // first request with a "confirm your email" link, which is handled.
+    formSubmitPath: "https://formsubmit.co/ajax/rajibulislam584452@gmail.com",
   };
 
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -16,103 +32,121 @@
   const yearEl = $("#year");
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
-  // ---------------------------------------------------------------- ROI calculator
-  const calls = $("#calls");
-  const value = $("#value");
-  const rate = $("#rate");
-  const MONTHLY_PRICE = 79; // Growth plan, the one the ROI is compared against
-
-  const money = (n) =>
-    "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
-
-  function updateRoi() {
-    if (!calls || !value || !rate) return;
-    const callsPerWeek = Number(calls.value);
-    const jobValue = Number(value.value);
-    const recoverRate = Number(rate.value) / 100;
-
-    $("#callsOut").textContent = String(callsPerWeek);
-    $("#valueOut").textContent = money(jobValue);
-    $("#rateOut").textContent = Math.round(recoverRate * 100) + "%";
-
-    const monthlyCalls = callsPerWeek * 4.33;
-    const jobs = Math.round(monthlyCalls * recoverRate);
-    const revenue = jobs * jobValue;
-    const net = revenue - MONTHLY_PRICE;
-
-    $("#jobs").textContent = String(jobs);
-    $("#rev").textContent = money(revenue);
-    $("#cost").textContent = money(MONTHLY_PRICE);
-    $("#net").textContent = money(net);
-
-    const lost = Math.round(monthlyCalls * jobValue);
-    const note = $("#roiNote");
-    if (note) {
-      note.innerHTML =
-        "Your business loses an estimated <b>" + money(lost) +
-        "</b> a month to missed calls. CallLoop costs less than a single job.";
-    }
-  }
-
-  [calls, value, rate].forEach((el) => {
-    if (el) el.addEventListener("input", updateRoi);
-  });
-  updateRoi();
-
-  // ---------------------------------------------------------------- chat animation
-  // Replays the demo conversation when it scrolls into view. Respects
-  // prefers-reduced-motion by simply revealing everything at once.
-  const chatBody = $("#chatBody");
-  if (chatBody) {
-    const bubbles = $$(".bubble", chatBody);
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (reduced) {
-      bubbles.forEach((b) => (b.style.opacity = "1"));
-    } else {
-      bubbles.forEach((b) => {
-        b.style.opacity = "0";
-        b.style.transform = "translateY(8px)";
-        b.style.transition = "opacity .35s ease, transform .35s ease";
-      });
-
-      const io = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (!entry.isIntersecting) return;
-            bubbles.forEach((b, i) => {
-              setTimeout(() => {
-                b.style.opacity = "1";
-                b.style.transform = "translateY(0)";
-              }, i * 520);
-            });
-            io.disconnect();
-          });
-        },
-        { threshold: 0.4 }
-      );
-      io.observe(chatBody);
-    }
-  }
-
-  // ---------------------------------------------------------------- demo form
+  // ---------------------------------------------------------------- form
   const form = $("#demoForm");
   const msg = $("#formMsg");
   const btn = $("#demoBtn");
+
+  /** A small, forgiving email check. The provider is the real authority. */
+  function looksLikeEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(value || "").trim());
+  }
+
+  /** Flatten the form into a plain object of strings. */
+  function collect(form) {
+    const out = {};
+    for (const [key, value] of new FormData(form).entries()) {
+      out[key] = typeof value === "string" ? value.trim() : value;
+    }
+    return out;
+  }
+
+  /** POST to a URL as JSON and report whether the server accepted it. */
+  async function postJson(url, payload) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return res;
+  }
+
+  /** POST to a URL as a normal HTML form submission. */
+  async function postForm(url, payload) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(payload).toString(),
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return res;
+  }
+
+  /**
+   * Try each capture route in turn. Returns the name of the route that
+   * worked, or throws if they all failed.
+   */
+  async function deliver(data) {
+    const payload = {
+      ...data,
+      subject: `ShipSafe ${data.tier || "review"} request — ${data.biz || "new lead"}`,
+      source: "shipsafe-landing-order-form",
+      submittedAt: new Date().toISOString(),
+      page: location.href,
+      referrer: document.referrer || null,
+    };
+
+    const errors = [];
+
+    // 1. Netlify's own form handling. Only meaningful on a Netlify site,
+    //    but harmless elsewhere (it just 404s and we move on).
+    try {
+      await postForm(CONFIG.netlifyPath, payload);
+      return "netlify";
+    } catch (err) {
+      errors.push("netlify: " + err.message);
+    }
+
+    // 2. FormSubmit, which needs no account and works on any static host.
+    try {
+      const res = await postJson(CONFIG.formSubmitPath, payload);
+      const text = await res.text();
+      // FormSubmit answers the very first submission with a confirmation
+      // link rather than "delivered". That still means the lead is safe:
+      // the confirmation email is what unlocks delivery.
+      try {
+        const json = JSON.parse(text);
+        if (json && json.success === true) return "formsubmit";
+        if (json && json.status === "confirmation_sent") return "formsubmit-confirm";
+      } catch {
+        /* not JSON - treat the 2xx as delivered */
+      }
+      return "formsubmit";
+    } catch (err) {
+      errors.push("formsubmit: " + err.message);
+    }
+
+    throw new Error(errors.join(" | "));
+  }
 
   if (form) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (!msg) return;
 
-      const data = Object.fromEntries(new FormData(form).entries());
-      const phone = String(data.phone || "").trim();
+      const data = collect(form);
+      const email = String(data.email || "").trim();
 
-      // Cheap client-side sanity check so we don't send garbage to the API.
-      const digits = phone.replace(/\D/g, "");
-      if (digits.length < 8) {
+      if (!email) {
         msg.className = "form-msg err";
-        msg.textContent = "That phone number looks too short — include the country code.";
+        msg.textContent = "I need an email address to send the report and the walkthrough to.";
+        const field = $("#email");
+        if (field) field.focus();
+        return;
+      }
+      if (!looksLikeEmail(email)) {
+        msg.className = "form-msg err";
+        msg.textContent = "That email address does not look right — check it and try again.";
+        const field = $("#email");
+        if (field) field.focus();
+        return;
+      }
+      if (!data.url) {
+        msg.className = "form-msg err";
+        msg.textContent = "Add the repo link or the live URL so I know what to review.";
+        const field = $("#url");
+        if (field) field.focus();
         return;
       }
 
@@ -121,41 +155,32 @@
       msg.className = "form-msg";
       msg.textContent = "";
 
-      const payload = {
-        ...data,
-        source: "landing-demo-form",
-        submittedAt: new Date().toISOString(),
-        page: location.href,
-        referrer: document.referrer || null,
-      };
-
       try {
-        const res = await fetch(CONFIG.demoEndpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-
+        const route = await deliver(data);
         msg.className = "form-msg ok";
         msg.textContent =
-          "Done — check your phone in the next few minutes for the demo text. (Nothing else will be sent.)";
+          route === "formsubmit-confirm"
+            ? "Almost there — I have your request. Check " + email + " for one confirmation click, then I'll get to work."
+            : "Got it. You'll hear from me at " + email + " within a few hours, with the delivery date and what I need from you.";
         form.reset();
       } catch (err) {
-        // Never lose a lead because the API is down: fall back to a prefilled email.
-        const subject = encodeURIComponent("CallLoop demo request — " + (data.biz || "New lead"));
+        // Never lose a lead because every programmatic route failed. Hand
+        // the visitor a prefilled email they can send with one click.
+        const subject = encodeURIComponent(
+          "ShipSafe " + (data.tier || "review") + " request — " + (data.biz || "new lead")
+        );
         const body = encodeURIComponent(
-          Object.entries(payload)
+          Object.entries(data)
             .map(([k, v]) => `${k}: ${v}`)
             .join("\n")
         );
         msg.className = "form-msg ok";
         msg.innerHTML =
-          'Almost — send this from your email and we\'ll reply within the hour: ' +
+          'Almost — send this from your email and I\'ll reply within the hour: ' +
           '<a href="' + CONFIG.mailFallback + "?subject=" + subject + "&body=" + body + '">open the prefilled email</a>.';
       } finally {
         btn.disabled = false;
-        btn.textContent = "Send me the demo";
+        btn.textContent = "Order the review";
       }
     });
   }

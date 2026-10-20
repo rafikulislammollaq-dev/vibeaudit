@@ -1,0 +1,12 @@
+# Normalise line endings so a checkout on Windows does not rewrite every
+# file in the repository. The tree is committed with LF; Windows checkouts
+# still work, they just do not churn the diff.
+* text=auto eol=lf
+
+# Anything that must never be touched.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.mp4 binary
+*.woff2 binary

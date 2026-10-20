@@ -24,6 +24,7 @@
       <a href="#checks">What I check</a>
       <a href="#pricing">Pricing</a>
       <a href="#process">How it works</a>
+      <a href="scanner/">Free scanner</a>
     </nav>
     <a class="btn btn-primary btn-sm" href="#order">Order a review</a>
   </div>
@@ -44,6 +45,7 @@
       </p>
       <div class="cta-row">
         <a class="btn btn-primary" href="#order">Order a review — $199</a>
+        <a class="btn btn-ghost" href="scanner/">Run the free browser scan</a>
         <a class="btn btn-ghost" href="#checks">See the 10 checks</a>
       </div>
       <ul class="proof">
@@ -51,6 +53,7 @@
         <li><strong>48h</strong> turnaround, fixed price</li>
         <li><strong>Plain</strong> English, no jargon dump</li>
       </ul>
+      <p class="fine">Or skip the form: <a href="scanner/">drop your project into the free browser scanner</a>. It runs entirely on your machine — your code never leaves the page.</p>
     </div>
 
     <div class="hero-demo" aria-label="Example findings">
@@ -119,7 +122,29 @@
   </div>
 </section>
 
-<section class="band" id="pricing">
+<section class="band" id="free">
+  <div class="wrap center">
+    <h2>Run the check yourself first. It is free.</h2>
+    <p class="sub">
+      The same scanner I use on paid reviews runs in your browser. Drop your project folder in,
+      it reads the files locally, and nothing is uploaded anywhere — no account, no signup, no
+      email address.
+    </p>
+    <p class="fine" style="max-width:46rem;margin:0 auto 1.5rem">
+      It checks committed secrets, row-level security on your Supabase tables, tokens accepted
+      with no signature, wildcard CORS with credentials, debug routes left switched on, and
+      environment files that are in git. It gives you a ship-readiness score out of 100 and a
+      paste-ready fix for every finding.
+    </p>
+    <a class="btn btn-primary btn-lg" href="scanner/">Open the free scanner</a>
+    <p class="fine" style="margin-top:1.25rem">
+      If it finds something serious and you would rather have a person read it, say so — the same
+      findings, ranked and explained, is the $199 review.
+    </p>
+  </div>
+</section>
+
+<section class="band alt" id="pricing">
   <div class="wrap">
     <h2 class="center">Pricing</h2>
     <p class="center sub">Fixed price, agreed before I start. No hourly meter running in the background.</p>
@@ -194,7 +219,19 @@
       </ul>
       <p class="fine">Confidentiality: your code is never shared, never sold, never used as training data, and deleted on request after delivery.</p>
     </div>
-    <form class="form" id="demoForm" novalidate>
+    <form class="form" id="demoForm" name="shipsafe-order" method="POST" netlify netlify-honeypot="bot-field" data-netlify="true" novalidate>
+      <input type="hidden" name="form-name" value="shipsafe-order" />
+      <p style="display:none">
+        <label>Leave this field empty: <input name="bot-field" tabindex="-1" autocomplete="off" /></label>
+      </p>
+      <div class="field">
+        <label for="name">Your name</label>
+        <input id="name" name="name" type="text" required placeholder="Sukanya Mondol" autocomplete="name" />
+      </div>
+      <div class="field">
+        <label for="email">Your email</label>
+        <input id="email" name="email" type="email" required placeholder="you@yourapp.com" autocomplete="email" />
+      </div>
       <div class="field">
         <label for="biz">App name</label>
         <input id="biz" name="biz" type="text" required placeholder="Travel advisor app" autocomplete="organization" />
@@ -278,6 +315,8 @@
       <a href="#order">Order</a>
       <a href="#pricing">Pricing</a>
       <a href="#checks">Checks</a>
+      <a href="scanner/">Free scanner</a>
+      <a href="https://github.com/rafikulislammollaq-dev/vibeaudit" rel="noopener">Open source</a>
     </nav>
   </div>
 </footer>
