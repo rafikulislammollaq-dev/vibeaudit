@@ -172,6 +172,7 @@ site/scanner/
 ├── lib/                  util, severity, secrets, sql, findings, evidence, report, files
 ├── checks/               secrets, env-committed, rls, jwt, cors, debug-routes
 ├── dev/verify.js         the Node verification harness (not part of the shipped tool)
+├── dev/serve.js          a tiny local static server, for clicking through the UI
 ├── package.json          "type": "module" only - no dependencies
 └── README.md
 ```
@@ -234,6 +235,16 @@ That harness:
    runs a real scan in it.
 
 It exits `0` and prints `ALL CHECKS PASSED` when everything is green.
+
+### Clicking through the UI locally
+
+```
+cd site/scanner
+node dev/serve.js          # http://localhost:8123
+```
+
+`dev/serve.js` is a development convenience only. The deployed tool is a folder
+of static files with no server at all.
 
 ---
 
