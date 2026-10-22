@@ -66,9 +66,11 @@
     const bar = el('progress-bar');
     const textNode = el('progress-text');
     const wrap = el('progress');
+    const track = wrap && wrap.querySelector ? wrap.querySelector('.progress-track') : null;
     if (!bar || !textNode || !wrap) return;
     const pct = total ? Math.round((done / total) * 100) : 0;
     bar.style.width = `${pct}%`;
+    if (track && track.setAttribute) track.setAttribute('aria-valuenow', String(pct));
     textNode.textContent = label || `${done} of ${total} files read (${pct}%)`;
     wrap.hidden = false;
   }
@@ -201,6 +203,7 @@
     const entries = [];
     const errors = [];
     const items = dataTransfer && dataTransfer.items ? Array.from(dataTransfer.items) : [];
+    let label = '';
 
     let sawEntry = false;
     for (const item of items) {
@@ -208,7 +211,19 @@
       const entry = typeof item.webkitGetAsEntry === 'function' ? item.webkitGetAsEntry() : null;
       if (!entry) continue;
       sawEntry = true;
-      await walkEntry(entry, '', entries, errors);
+
+      const batch = [];
+      await walkEntry(entry, '', batch, errors);
+
+      // Dropping a folder should give the same relative paths as the folder
+      // picker, so the folder's own name is stripped from the front.
+      const strip = entry.isDirectory ? `${entry.name}/` : '';
+      if (entry.isDirectory && !label) label = entry.name;
+      for (const item2 of batch) {
+        const relPath =
+          strip && item2.relPath.startsWith(strip) ? item2.relPath.slice(strip.length) : item2.relPath;
+        entries.push({ file: item2.file, relPath });
+      }
     }
 
     if (!sawEntry) {
@@ -225,7 +240,6 @@
       return { entries, errors, label: '' };
     }
 
-    const label = entries.length ? entries[0].relPath.split('/')[0] : '';
     return { entries, errors, label };
   }
 
@@ -233,7 +247,7 @@
   /* the scan                                                            */
   /* ------------------------------------------------------------------ */
 
-  async function ingest(entries, label, errors) {
+  async function ingest(entries) {
     const files = [];
     const skipped = [];
     let bytes = 0;
@@ -270,7 +284,7 @@
     try {
       setStatus('Reading your files…');
       setProgress(0, entries.length, 'Reading 0 of ' + entries.length + ' files…');
-      const { files, skipped, bytes } = await ingest(entries, label, errors);
+      const { files, skipped, bytes } = await ingest(entries);
 
       if (!files.length) {
         setStatus('None of those files could be read as text, so there was nothing to scan.', 'error');
@@ -303,9 +317,11 @@
           `${S.lib.util.formatBytes(bytes)}.`,
         'done',
       );
+      return report;
     } catch (error) {
       hideProgress();
       setStatus(`The scan failed: ${String((error && error.message) || error)}`, 'error');
+      return null;
     } finally {
       state.busy = false;
     }
@@ -627,6 +643,12 @@
       });
       zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
       zone.addEventListener('drop', handleDrop);
+      // Clicking the zone opens the folder picker - but not when the click
+      // landed on one of the buttons inside it (they have their own handler).
+      zone.addEventListener('click', (event) => {
+        if (event.target && event.target.closest && event.target.closest('button')) return;
+        if (folderInput) folderInput.click();
+      });
       // Keyboard reachable: the zone is a button, so Enter and Space work.
       zone.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
@@ -643,6 +665,10 @@
 
   S.app.init = init;
   S.app.runScan = runScan;
+  S.app.renderReport = renderReport;
+  S.app.intakeFromInput = intakeFromInput;
+  S.app.intakeFromDrop = intakeFromDrop;
+  S.app.buildRecord = buildRecord;
 
   if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') {
