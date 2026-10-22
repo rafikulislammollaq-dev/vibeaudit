@@ -19,6 +19,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import vm from 'node:vm';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
@@ -377,6 +378,247 @@ for (const entry of ENTRY_POINTS) {
   } else {
     line(`  PASS  ${entry} reaches all ${CHECK_MODULES.length} check modules`);
   }
+}
+line();
+
+/* ------------------------------------------------------------------ */
+/* 7. the file:// (classic script) load path                            */
+/* ------------------------------------------------------------------ */
+
+/*
+ * WHY THIS EXISTS
+ *
+ * When index.html is opened from the filesystem, browsers refuse to load ES
+ * modules over file://, so the page falls back to loading the very same
+ * files as CLASSIC scripts, in the order listed in the page's inline
+ * bootstrap. That order is data in an HTML file, so nothing else checks it.
+ *
+ * This section parses the order straight out of index.html, replays it in a
+ * fresh V8 context (which is what a classic script sees: a bare global, no
+ * module system) and then runs a real scan inside that context. If the list
+ * is stale, or a core file is missing from it, the registry ends up with
+ * undefined entries and the scan silently reports nothing.
+ */
+
+rule();
+line('7. file:// LOAD PATH (classic scripts, in the order index.html lists them)');
+rule();
+
+const indexHtml = await readFile(path.join(root, 'index.html'), 'utf8');
+const coreMatch = indexHtml.match(/var CORE = \[([\s\S]*?)\];/);
+if (!coreMatch) {
+  line('  FAIL  could not find the CORE script list in index.html');
+  importGraphFailures += 1;
+} else {
+  const coreList = coreMatch[1]
+    .split(',')
+    .map((entry) => entry.trim().replace(/^['"]|['"]$/g, ''))
+    .filter(Boolean);
+
+  let missingFiles = 0;
+  for (const rel of coreList) {
+    try {
+      await readFile(path.join(root, rel), 'utf8');
+    } catch {
+      missingFiles += 1;
+      line(`  FAIL  ${rel} is listed in index.html but does not exist`);
+    }
+  }
+  if (!missingFiles) line(`  PASS  all ${coreList.length} classic scripts in index.html exist`);
+
+  // Replay the classic load in a fresh context: no modules, just globals.
+  const sandbox = {
+    console,
+    setTimeout,
+    clearTimeout,
+    TextDecoder,
+    Uint8Array,
+    atob,
+    btoa,
+    performance,
+  };
+  vm.createContext(sandbox);
+  let classicError = null;
+  for (const rel of coreList) {
+    const source = await readFile(path.join(root, rel), 'utf8');
+    try {
+      vm.runInContext(source, sandbox, { filename: rel });
+    } catch (error) {
+      classicError = `${rel}: ${error.message}`;
+      break;
+    }
+  }
+
+  if (classicError) {
+    line(`  FAIL  classic load failed - ${classicError}`);
+    importGraphFailures += 1;
+  } else {
+    const checks = sandbox.SCANNER && sandbox.SCANNER.checks && sandbox.SCANNER.checks.CHECKS;
+    const defined = Array.isArray(checks) ? checks.filter(Boolean).length : 0;
+    if (defined !== 6) {
+      line(`  FAIL  the classic path registered ${defined}/6 checks`);
+      importGraphFailures += 1;
+    } else {
+      line(`  PASS  the classic path registered all ${defined} checks with no module system`);
+    }
+
+    // Run a real scan inside the classic context.
+    const classicFiles = [
+      sandbox.SCANNER.lib.files.createFileRecord({
+        relPath: '.env',
+        name: '.env',
+        ext: '.env',
+        size: 60,
+        content: 'STRIPE_SECRET_KEY=sk_' + 'live_51QaBcDeFgHiJkLmNoPqRsTuVwXyZ0123\n',
+      }),
+    ];
+    const classicReport = sandbox.SCANNER.scan.scanProject({
+      files: classicFiles,
+      label: 'classic-path-check',
+    });
+    const stripeHit = classicReport.findings.find((f) => f.title.includes('Stripe live secret key'));
+    if (!stripeHit) {
+      line('  FAIL  the classic path found no secret in the fixture');
+      importGraphFailures += 1;
+    } else {
+      line(`  PASS  the classic path scanned correctly (${classicReport.verdict}, ${classicReport.score}/100)`);
+    }
+  }
+}
+line();
+
+/* ------------------------------------------------------------------ */
+/* 8. DOM wiring + rendering smoke test                                 */
+/* ------------------------------------------------------------------ */
+
+/*
+ * WHY THIS EXISTS
+ *
+ * There is no browser in this harness, so the UI layer would otherwise be
+ * untested. Two cheap checks stand in for it:
+ *
+ *   a) every element id the app looks up must exist in index.html, or the
+ *      UI silently does nothing;
+ *   b) the renderer is run against a minimal DOM stub, so a typo in the
+ *      rendering code throws here instead of in a visitor's browser.
+ */
+
+rule();
+line('8. DOM WIRING + RENDERING SMOKE TEST');
+rule();
+
+const appSource = await readFile(path.join(root, 'app.core.js'), 'utf8');
+const htmlIds = new Set([...indexHtml.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
+const referencedIds = new Set([...appSource.matchAll(/\bel\('([^']+)'\)/g)].map((m) => m[1]));
+const missingIds = [...referencedIds].filter((id) => !htmlIds.has(id));
+if (missingIds.length) {
+  line(`  FAIL  app.core.js looks up ${missingIds.length} id(s) that index.html does not have: ${missingIds.join(', ')}`);
+  importGraphFailures += 1;
+} else {
+  line(`  PASS  all ${referencedIds.size} element ids used by app.core.js exist in index.html`);
+}
+
+// --- the DOM stub -----------------------------------------------------
+function createNode(tag) {
+  const node = {
+    tagName: tag,
+    className: '',
+    textContent: '',
+    value: '',
+    href: '',
+    hidden: false,
+    dataset: {},
+    style: {},
+    attributes: {},
+    children: [],
+    files: [],
+    get firstChild() {
+      return this.children[0] || null;
+    },
+    appendChild(child) {
+      this.children.push(child);
+      return child;
+    },
+    removeChild(child) {
+      this.children = this.children.filter((c) => c !== child);
+      return child;
+    },
+    setAttribute(key, value) {
+      this.attributes[key] = value;
+    },
+    getAttribute(key) {
+      return this.attributes[key];
+    },
+    addEventListener() {},
+    removeEventListener() {},
+    scrollIntoView() {},
+    focus() {},
+    select() {},
+    click() {},
+    set innerHTML(value) {
+      this.children = [];
+    },
+  };
+  return node;
+}
+
+const domNodes = new Map();
+const documentStub = {
+  readyState: 'complete',
+  createElement: createNode,
+  createTextNode: (text) => ({ textContent: text }),
+  getElementById(id) {
+    if (!domNodes.has(id)) domNodes.set(id, createNode('div'));
+    return domNodes.get(id);
+  },
+  addEventListener() {},
+  removeEventListener() {},
+  execCommand: () => true,
+  body: createNode('body'),
+  head: createNode('head'),
+};
+
+const uiSandbox = {
+  console,
+  setTimeout,
+  clearTimeout,
+  TextDecoder,
+  Uint8Array,
+  atob,
+  btoa,
+  performance,
+  document: documentStub,
+  navigator: {},
+  window: { isSecureContext: false },
+};
+vm.createContext(uiSandbox);
+const uiCoreList = coreMatch[1]
+  .split(',')
+  .map((entry) => entry.trim().replace(/^['"]|['"]$/g, ''))
+  .filter(Boolean);
+try {
+  for (const rel of uiCoreList) {
+    const source = await readFile(path.join(root, rel), 'utf8');
+    vm.runInContext(source, uiSandbox, { filename: rel });
+  }
+  const uiReport = uiSandbox.SCANNER.scan.scanProject({
+    files: FIXTURES,
+    label: 'dom-smoke-test',
+  });
+  uiSandbox.SCANNER.app.renderReport(uiReport);
+  const resultsNode = documentStub.getElementById('results');
+  if (!resultsNode.children.length) {
+    line('  FAIL  renderReport() produced no output');
+    importGraphFailures += 1;
+  } else {
+    line(`  PASS  renderReport() produced ${resultsNode.children.length} top-level section(s) without throwing`);
+  }
+} catch (error) {
+  line(`  FAIL  the UI layer threw - ${error && error.message}`);
+  if (error && error.stack) {
+    for (const frame of String(error.stack).split('\n').slice(1, 5)) line(`        ${frame.trim()}`);
+  }
+  importGraphFailures += 1;
 }
 line();
 
